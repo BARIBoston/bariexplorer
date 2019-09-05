@@ -117,6 +117,13 @@ def pull_picture(address, lon, lat, api_key):
         }])\
         .download_links(IMAGES_DIR)
 
+# Given a string of words, individually capitalize each word
+def capitalize_all_words(str_):
+    return " ".join([
+        word.capitalize()
+        for word in str_.split(" ")
+    ])
+
 # Given a row of data from the input CSV file, generate a tweet describing its
 # attributes, download an image from Google Street View, and return the content
 # of that tweet.
@@ -128,7 +135,7 @@ def generate_tweet(row, googlemaps_api_key):
     else:
         street_num = "This parcel on"
     address = " ".join([
-        street_num, row["ST_NAME"].capitalize(), row["ST_NAME_SUF"].capitalize() + "."
+        street_num, capitalize_all_words(row["ST_NAME"]), row["ST_NAME_SUF"].capitalize() + "."
     ])
 
     ### Building style: "residential brownstone"
