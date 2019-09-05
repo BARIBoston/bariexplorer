@@ -8,6 +8,7 @@ import time
 
 # Directory to save Google Street View images and metadata files to
 IMAGES_DIR = "."
+DEFAULT_IMAGE_PATH = "%s/gsv_0.jpg" % IMAGES_DIR
 
 # The CSV file to retrieve data from
 INPUT_FILE = "forbot_combined_9_3_shuffled.csv"
@@ -230,7 +231,6 @@ def generate_tweet(row, googlemaps_api_key):
         f" {renovated_str}."
     )
 
-
 if (__name__ == "__main__"):
     import argparse
     import json
@@ -268,11 +268,24 @@ if (__name__ == "__main__"):
         print("Gathering information for row: %d" % index)
         message = generate_tweet(row, credentials["googlemaps"])
 
-        if (args.dry_run):
-            print("Not Tweeting: %s" % message)
+        # Tweet with image
+        if (os.path.isfile(DEFAULT_IMAGE_PATH)):
+            if (args.dry_run):
+                print("Not Tweeting: %s" % message)
+            else:
+                print("Tweeting: %s" % message)
+                status = api.update_with_media(DEFAULT_IMAGE_PATH, message)
+            os.remove(DEFAULT_IMAGE_PATH)
+
+        # Tweet without image
         else:
-            print("Tweeting: %s" % message)
-            status = api.update_with_media("gsv_0.jpg", message)
+            message = "%s There is no image available for this parcel." % message
+            if (args.dry_run):
+                print("Not Tweeting: %s" % message)
+            else:
+                print("Tweeting: %s" % message)
+                status = api.update_status(message)
+
 
         # Save position
         with open(STATUS_FILE, "w") as f:
