@@ -77,6 +77,22 @@ PERMIT_TYPE_MAPPING = {
     "Erect/New Construction": "permit for new construction",
     "Foundation Permit": "foundation permit"
 }
+ST_NAME_SUF_MAPPING = {
+    "AV": "Ave.",
+    "RO": "Row",
+    "TE": "Ter.",
+    "WY": "Way",
+    "HW": "Hwy.",
+    "PW": "Pkwy.",
+    "LA": "Ln.",
+    "CI": "Cir.",
+    "BL": "Blvd.",
+    "PZ": "Placa",
+    "WH": "Wharf",
+    "CC": "Circuit",
+    "XT": "Ext.",
+    "CW": "Crossway"
+}
 
 # Special: A "the" is prepended to these neighbourhood values
 # e.g. "South End" -> "the South End"
@@ -130,12 +146,20 @@ def capitalize_all_words(str_):
 def generate_tweet(row, googlemaps_api_key):
 
     ### Address string: "This parcel on Waymount St." or "72 Day St."
+
     if (contains_digits(row["ST_NUM"])):
         street_num = row["ST_NUM"].replace(" ", "-")
     else:
         street_num = "This parcel on"
+
+    suffix_raw = row["ST_NAME_SUF"]
+    if (suffix_raw in ST_NAME_SUF_MAPPING):
+        suffix = ST_NAME_SUF_MAPPING[suffix_raw]
+    else:
+        suffix = suffix_raw.capitalize() + "."
+
     address = " ".join([
-        street_num, capitalize_all_words(row["ST_NAME"]), row["ST_NAME_SUF"].capitalize() + "."
+        street_num, capitalize_all_words(row["ST_NAME"]), suffix
     ])
 
     ### Building style: "residential brownstone"
