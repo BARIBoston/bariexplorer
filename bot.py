@@ -208,8 +208,13 @@ def generate_tweet(row, googlemaps_api_key):
 
 
 if (__name__ == "__main__"):
+    import argparse
     import json
     import tweepy
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-n", "--dry-run", dest = "dry_run", action = "store_true", default = False)
+    args = parser.parse_args()
 
     print("loading")
 
@@ -239,8 +244,11 @@ if (__name__ == "__main__"):
         print("Gathering information for row: %d" % index)
         message = generate_tweet(row, credentials["googlemaps"])
 
-        print("Tweeting: %s" % message)
-        status = api.update_with_media("gsv_0.jpg", message)
+        if (args.dry_run):
+            print("Not Tweeting: %s" % message)
+        else:
+            print("Tweeting: %s" % message)
+            status = api.update_with_media("gsv_0.jpg", message)
 
         # Save position
         with open(STATUS_FILE, "w") as f:
