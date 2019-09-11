@@ -24,7 +24,8 @@ VOWELS = "AEIOUaeiou"
 DIGITS = "1234567890"
 
 # Time to sleep between new tweets
-SLEEP_TIME = 30 * 60 # 30 minutes
+#SLEEP_TIME = 30 * 60 # 30 minutes
+SLEEP_TIME = 60 * 60 # 1 hour
 
 # Dicts to map values as they appear in the CSV file to values as they should
 # appear in tweets. The names of the constants roughly follows the format of
