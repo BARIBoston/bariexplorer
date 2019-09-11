@@ -269,6 +269,10 @@ if (__name__ == "__main__"):
         print("Gathering information for row: %d" % index)
         message = generate_tweet(row, credentials["googlemaps"])
 
+        # Save position
+        with open(STATUS_FILE, "w") as f:
+            f.write(str(index))
+
         # Tweet with image
         if (os.path.isfile(DEFAULT_IMAGE_PATH)):
             if (args.dry_run):
@@ -277,6 +281,7 @@ if (__name__ == "__main__"):
                 print("Tweeting: %s" % message)
                 status = api.update_with_media(DEFAULT_IMAGE_PATH, message)
             os.remove(DEFAULT_IMAGE_PATH)
+            time.sleep(SLEEP_TIME)
 
         # Tweet without image
         else:
@@ -285,13 +290,7 @@ if (__name__ == "__main__"):
                 print("Not Tweeting: %s" % message)
             else:
                 print("Not Tweeting: %s" % message)
-                #print("Tweeting: %s" % message)
                 #status = api.update_status(message)
 
 
-        # Save position
-        with open(STATUS_FILE, "w") as f:
-            f.write(str(index))
-
         print("")
-        time.sleep(SLEEP_TIME)
