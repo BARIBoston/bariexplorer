@@ -284,8 +284,9 @@ if (__name__ == "__main__"):
             if (args.dry_run):
                 print("Not Tweeting: %s" % message)
             else:
-                print("Tweeting: %s" % message)
-                status = api.update_status(message)
+                print("Not Tweeting: %s" % message)
+                #print("Tweeting: %s" % message)
+                #status = api.update_status(message)
 
 
         # Save position
