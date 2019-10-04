@@ -89,7 +89,7 @@ ST_NAME_SUF_MAPPING = {
     "LA": "Ln.",
     "CI": "Cir.",
     "BL": "Blvd.",
-    "PZ": "Placa",
+    "PZ": "Plaza",
     "WH": "Wharf",
     "CC": "Circuit",
     "XT": "Ext.",
