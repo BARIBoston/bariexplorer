@@ -158,11 +158,19 @@ def generate_tweet(row, googlemaps_api_key):
     if (suffix_raw in ST_NAME_SUF_MAPPING):
         suffix = ST_NAME_SUF_MAPPING[suffix_raw]
     else:
-        suffix = suffix_raw.capitalize() + "."
+        if (not pandas.isnull(suffix_raw)):
+            suffix = suffix_raw.capitalize() + "."
+        else:
+            suffix = None
 
-    address = " ".join([
-        street_num, capitalize_all_words(row["ST_NAME"]), suffix
-    ])
+    if (suffix):
+        address = " ".join([
+            street_num, capitalize_all_words(row["ST_NAME"]), suffix
+        ])
+    else:
+        address = " ".join([
+            street_num, capitalize_all_words(row["ST_NAME"])
+        ])
 
     ### Building style: "residential brownstone"
     if (row["SIMPLIFIED_LU"] in SIMPLIFED_LU_MAPPING):
