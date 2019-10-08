@@ -98,13 +98,26 @@ ST_NAME_SUF_MAPPING = {
 
 # Special: A "the" is prepended to these neighbourhood values
 # e.g. "South End" -> "the South End"
-PREPEND_THE = {
+NEIGHBOURHOOD_PREPEND_THE = {
     "South End",
     "North End",
     "West End",
     "South Boston Waterfront",
     "Leather District"
 }
+NEIGHBOURHOOD_HASHTAG_MAPPING = {
+    "East Boston": "#eastie",
+    "Jamaica Plain": "#jp",
+    "South Boston": "#southie",
+    "South Boston Waterfront": "#seaport"
+}
+
+# Convert a neighbourhood into a hashtag
+def neighbourhood_to_hashtag(neighbourhood_name):
+    if (neighbourhood_name in NEIGHBOURHOOD_HASHTAG_MAPPING):
+        return NEIGHBOURHOOD_HASHTAG_MAPPING[neighbourhood_name]
+    else:
+        return "#%s" % neighbourhood_name.lower().replace(" ", "")
 
 # Return the proper article based on whether or not the first character of a
 # string is a vowel or not
@@ -196,10 +209,10 @@ def generate_tweet(row, googlemaps_api_key):
         sections = row["NBHDS89_"].split("/")
 
     # "South End" -> "the South End"
-    if (neighbourhood in PREPEND_THE):
-        neighbourhood_fixed = "the %s" % neighbourhood
+    if (neighbourhood in NEIGHBOURHOOD_PREPEND_THE):
+        neighbourhood_fixed = "the %s" % neighbourhood_to_hashtag(neighbourhood)
     else:
-        neighbourhood_fixed = neighbourhood
+        neighbourhood_fixed = neighbourhood_to_hashtag(neighbourhood)
 
     # "Fenway/West Fens section of Fenway" -> "West Fens section of Fenway"
     try:
