@@ -97,7 +97,6 @@ ST_NAME_SUF_MAPPING = {
 }
 NEIGHBOURHOOD_HASHTAG_MAPPING = {
     "East Boston": "#eastie",
-    "Jamaica Plain": "#jp",
     "South Boston": "#southie",
     "South Boston Waterfront": "#seaport"
 }
@@ -301,6 +300,7 @@ if (__name__ == "__main__"):
             else:
                 print("Tweeting: %s" % message)
                 status = api.update_with_media(DEFAULT_IMAGE_PATH, message)
+                # returns Status object
             os.remove(DEFAULT_IMAGE_PATH)
             time.sleep(SLEEP_TIME)
 
