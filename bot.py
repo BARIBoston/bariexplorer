@@ -95,6 +95,12 @@ ST_NAME_SUF_MAPPING = {
     "XT": "Ext.",
     "CW": "Crossway"
 }
+NEIGHBOURHOOD_HASHTAG_MAPPING = {
+    "East Boston": "#eastie",
+    "Jamaica Plain": "#jp",
+    "South Boston": "#southie",
+    "South Boston Waterfront": "#seaport"
+}
 
 # Special: A "the" is prepended to these neighbourhood values
 # e.g. "South End" -> "the South End"
@@ -104,12 +110,6 @@ NEIGHBOURHOOD_PREPEND_THE = {
     "West End",
     "South Boston Waterfront",
     "Leather District"
-}
-NEIGHBOURHOOD_HASHTAG_MAPPING = {
-    "East Boston": "#eastie",
-    "Jamaica Plain": "#jp",
-    "South Boston": "#southie",
-    "South Boston Waterfront": "#seaport"
 }
 
 # Convert a neighbourhood into a hashtag
