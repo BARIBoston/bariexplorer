@@ -80,20 +80,27 @@ PERMIT_TYPE_MAPPING = {
     "Foundation Permit": "foundation permit"
 }
 ST_NAME_SUF_MAPPING = {
+    "AL": "Alley",
     "AV": "Ave.",
+    "BL": "Blvd.",
+    "CC": "Circuit",
+    "CI": "Cir.",
+    "CR": "Crescent",
+    "CW": "Crossway",
+    "DR": "Drive",
+    "HW": "Hwy.",
+    "LA": "Ln.",
+    "MA": "Mall",
+    "PA": "Path",
+    "PK": "Park",
+    "PW": "Pkwy.",
+    "PZ": "Plaza",
     "RO": "Row",
     "TE": "Ter.",
-    "WY": "Way",
-    "HW": "Hwy.",
-    "PW": "Pkwy.",
-    "LA": "Ln.",
-    "CI": "Cir.",
-    "BL": "Blvd.",
-    "PZ": "Plaza",
+    "WA": "Way",
     "WH": "Wharf",
-    "CC": "Circuit",
-    "XT": "Ext.",
-    "CW": "Crossway"
+    "WY": "Way",
+    "XT": "Ext."
 }
 NEIGHBOURHOOD_HASHTAG_MAPPING = {
     "East Boston": "#eastie",
