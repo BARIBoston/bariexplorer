@@ -11,7 +11,7 @@ IMAGES_DIR = "."
 DEFAULT_IMAGE_PATH = "%s/gsv_0.jpg" % IMAGES_DIR
 
 # The CSV file to retrieve data from
-INPUT_FILE = "forbot_combined_9_3_shuffled.csv"
+INPUT_FILE = "./Parcel_final_2018_10252019.csv"
 
 # The JSON file where credentials are stored
 CREDENTIALS_FILE = "credentials.json"
@@ -253,7 +253,7 @@ def generate_tweet(row, googlemaps_api_key):
     ### Download picture
     pull_picture(
         "%s, %s" % (address, neighbourhood_fixed),
-        row["longitude"], row["latitude"],
+        row["x"], row["y"],
         googlemaps_api_key
     )
 
