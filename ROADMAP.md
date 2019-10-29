@@ -9,6 +9,7 @@ Next release
     * [ ] Road segment line
 * [ ] Fix parcel values
   * [ ] Aggregate AV_TOTAL by grouping by Land_Parcel_ID and summing
+  * [ ] One tweet per parcel: either the zero value record or the first record observed
 
 Future releases
 Reply tweet language:
