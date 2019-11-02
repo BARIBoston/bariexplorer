@@ -92,6 +92,7 @@ ST_NAME_SUF_MAPPING = {
     "CR": "Crescent",
     "CW": "Crossway",
     "DR": "Drive",
+    "EXD": "Ext."
     "HW": "Hwy.",
     "LA": "Ln.",
     "MA": "Mall",
@@ -212,11 +213,11 @@ def generate_tweet(row, googlemaps_api_key):
     # We manipulate a list here instead of using string manipulations because
     # several synonyms for a neighbourhood are separated by slashes, and it's
     # easier to do comparisons and modifications on a list of these synonyms
-    neighbourhood = row["Name"]
-    if (row["NBHDS89_"] == "Cleveland Circle (/Brighton)"):
+    neighbourhood = row["neighborhood"]
+    if (row["section"] == "Cleveland Circle (/Brighton)"):
         sections = ["Cleveland Circle", "Brighton"] # Special case
     else:
-        sections = row["NBHDS89_"].split("/")
+        sections = row["section"].split("/")
 
     # "South End" -> "the South End"
     if (neighbourhood in NEIGHBOURHOOD_PREPEND_THE):
