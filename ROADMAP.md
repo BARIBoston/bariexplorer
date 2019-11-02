@@ -5,10 +5,10 @@ Next release
   * [ ] Parcel map
     * [x] Satellite map
     * [x] Parcel outline
-    * [ ] Subway and bus icons
+    * [x] Subway and bus icons
     * [ ] Road segment line
 * [ ] Fix parcel values
-  * [ ] Aggregate AV_TOTAL by grouping by Land_Parcel_ID and summing
+  * [x] <s>Aggregate AV_TOTAL by grouping by Land_Parcel_ID and summing</s> the value for AV_TOTAL for records with the same Land_Parcel_ID are the same in the new file
   * [ ] One tweet per parcel: either the zero value record or the first record observed
 
 Future releases
@@ -21,8 +21,8 @@ Images:
 * [ ] Neighborhood level, with bus lines in yellow, T lines in their individual colors, and T stops indicated with white T icon
 
 Variables:
-* [ ] For each stop: bus or subway
-* [ ] For each parcel: walking time to nearest stop
+* [x] For each stop: bus or subway
+* [x] For each parcel: walking time to nearest stop
 * [ ] For block group: average distance (in miles) to nearest transit stop
 * [ ] For neighborhood: number of transit lines (bus + T) that are found in that neighborhood
 
