@@ -2,11 +2,11 @@ Next release
 * [x] Use hashtags for the neighbourhoods 
 * [ ] Reply tweet
   * [ ] Parcel info
-  * [ ] Parcel map
+  * [x] Parcel map
     * [x] Satellite map
     * [x] Parcel outline
     * [x] Subway and bus icons
-    * [ ] Road segment line
+    * [x] <s>Road segment line</s> Determined to not be useful
 * [ ] Fix parcel values
   * [x] <s>Aggregate AV_TOTAL by grouping by Land_Parcel_ID and summing</s> the value for AV_TOTAL for records with the same Land_Parcel_ID are the same in the new file
   * [ ] One tweet per parcel: either the zero value record or the first record observed
