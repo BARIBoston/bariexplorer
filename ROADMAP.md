@@ -16,9 +16,9 @@ Reply tweet language:
 "The closest MBTA [bus/subway] stop is [stop_name]. This is a [time] minute walk, according to OpenStreetMap. The average walking distance to a transit stop in this census block group is [dist]. [Number] different transit lines serve [neighborhood_name]."
 
 Images:
-* [ ] Parcel-level, with parcel outlined, walking directions traced, and stop indicated with yellow bus or white T icon
+* [x] Parcel-level, with parcel outlined, walking directions traced, and stop indicated with yellow bus or white T icon
 * [ ] Block group level, with same annotation as above
-* [ ] Neighborhood level, with bus lines in yellow, T lines in their individual colors, and T stops indicated with white T icon
+* [x] Neighborhood level, with bus lines in yellow, T lines in their individual colors, and T stops indicated with white T icon
 
 Variables:
 * [x] For each stop: bus or subway
