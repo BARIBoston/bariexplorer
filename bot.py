@@ -11,7 +11,7 @@ IMAGES_DIR = "."
 DEFAULT_IMAGE_PATH = "%s/gsv_0.jpg" % IMAGES_DIR
 
 # The CSV file to retrieve data from
-INPUT_FILE = "./Parcel_final_2018_10252019.csv"
+INPUT_FILE = "./parcels_new.csv"
 
 # The JSON file where credentials are stored
 CREDENTIALS_FILE = "credentials.json"
@@ -60,8 +60,8 @@ LU_MAPPING = {
     # CC, CD, CM = condominium
     "AH": "agricultural parcel",
     "C": "commercial parcel",
-    "CL": "commercial parcel" # "commercial land"
-    "CP": "parking lot"
+    "CL": "commercial parcel", # "commercial land"
+    "CP": "parking lot",
     "E": "tax exempt parcel",
     "EA": "tax exempt parcel",
     "I": "industrial parcel",
@@ -92,7 +92,7 @@ ST_NAME_SUF_MAPPING = {
     "CR": "Crescent",
     "CW": "Crossway",
     "DR": "Drive",
-    "EXD": "Ext."
+    "EXD": "Ext.",
     "HW": "Hwy.",
     "LA": "Ln.",
     "MA": "Mall",
@@ -169,7 +169,7 @@ def capitalize_all_words(str_):
 # Given a row of data from the input CSV file, generate a tweet describing its
 # attributes, download an image from Google Street View, and return the content
 # of that tweet.
-def generate_tweet(row, googlemaps_api_key):
+def generate_parcel_tweet(row, googlemaps_api_key):
 
     ### Address string: "This parcel on Waymount St." or "72 Day St."
 
@@ -197,8 +197,8 @@ def generate_tweet(row, googlemaps_api_key):
         ])
 
     ### Building style: "residential brownstone"
-    if (row["LU"] in SIMPLIFED_LU_MAPPING):
-        building_style = SIMPLIFED_LU_MAPPING[row["LU"]]
+    if (row["LU"] in LU_MAPPING):
+        building_style = LU_MAPPING[row["LU"]]
     else:
         building_style = R_BLDG_STYL_MAPPING[row["R_BLDG_STYL"]]
 
@@ -248,7 +248,7 @@ def generate_tweet(row, googlemaps_api_key):
         renovated_str = "No building permits were issued for this address since 2006"
     else:
         renovated_str = "A %s was last issued in %d" % (
-            PERMIT_TYPE_MAPPING[row["PermitTypeDescr"]], year_renovated
+            PERMIT_TYPE_MAPPING[row["permittypedescr"]], year_renovated
         )
 
     ### Download picture
@@ -299,7 +299,7 @@ if (__name__ == "__main__"):
     # Loop over rows
     for (index, row) in df[start_at + 2:].iterrows():
         print("Gathering information for row: %d" % index)
-        message = generate_tweet(row, credentials["googlemaps"])
+        message = generate_parcel_tweet(row, credentials["googlemaps"])
 
         # Save position
         with open(STATUS_FILE, "w") as f:
