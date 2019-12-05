@@ -11,7 +11,15 @@ IMAGES_DIR = "."
 DEFAULT_IMAGE_PATH = "%s/gsv_0.jpg" % IMAGES_DIR
 
 # The CSV file to retrieve data from
-INPUT_FILE = "./parcels_new.csv"
+INPUT_PARCELS = "./parcels_new.csv"
+INPUT_NEIGHBORHOODS = "./neighborhoods.csv"
+NEIGHBORHOOD_ATTRIBUTES = pandas.read_csv(INPUT_NEIGHBORHOODS)
+INPUT_BLOCKGROUPS = "./blockgroups.csv"
+BLOCKGROUP_ATTRIBUTES = pandas.read_csv(INPUT_BLOCKGROUPS)
+
+# Pregenerated images
+NEIGHBORHOOD_IMAGES = "./neighborhood_maps/"
+PARCEL_IMAGES = "./composite/"
 
 # The JSON file where credentials are stored
 CREDENTIALS_FILE = "credentials.json"
@@ -26,6 +34,13 @@ DIGITS = "1234567890"
 # Time to sleep between new tweets
 #SLEEP_TIME = 30 * 60 # 30 minutes
 SLEEP_TIME = 60 * 60 # 1 hour
+
+# If less than this many miles, convert to feet
+MILES_FEET_CUTOFF = 0.1
+
+# Conversion factors
+METERS_IN_MILE = 1609.344
+FEET_IN_MILE = 5280
 
 # Dicts to map values as they appear in the CSV file to values as they should
 # appear in tweets. The names of the constants roughly follows the format of
@@ -123,6 +138,13 @@ NEIGHBOURHOOD_PREPEND_THE = {
     "Leather District"
 }
 
+def human_readable_distance(distance_meters):
+    distance_miles = distance_meters / METERS_IN_MILE
+    if (distance_miles < MILES_FEET_CUTOFF):
+        return "%d feet" % (distance_miles * FEET_IN_MILE)
+    else:
+        return "%0.2f miles" % distance_miles
+
 # Convert a neighbourhood into a hashtag
 def neighbourhood_to_hashtag(neighbourhood_name):
     if (neighbourhood_name in NEIGHBOURHOOD_HASHTAG_MAPPING):
@@ -166,9 +188,9 @@ def capitalize_all_words(str_):
         for word in str_.split(" ")
     ])
 
-# Given a row of data from the input CSV file, generate a tweet describing its
-# attributes, download an image from Google Street View, and return the content
-# of that tweet.
+# Given a row of data from the parcels CSV file, generate a tweet describing
+# its attributes, download an image from Google Street View, and return the
+# content of that tweet.
 def generate_parcel_tweet(row, googlemaps_api_key):
 
     ### Address string: "This parcel on Waymount St." or "72 Day St."
@@ -264,6 +286,51 @@ def generate_parcel_tweet(row, googlemaps_api_key):
         f" {renovated_str}."
     )
 
+# Given a row of data from the parcels CSV file, generate a tweet describing
+# the attributes of the neighbourhood and return relevant images
+def generate_neighborhood_tweet(row):
+    neighborhood_name = row["neighborhood"]
+
+    # neighborhood attributes are stored in a separate file
+    neighborhood_attributes = NEIGHBORHOOD_ATTRIBUTES[
+        NEIGHBORHOOD_ATTRIBUTES["Name"] == neighborhood_name
+    ].iloc[0]
+    n_transit_lines = neighborhood_attributes["n_bus_lines"] + neighborhood_attributes["n_subway_lines"]
+
+    # also block group attributes
+    blockgroup_attributes = BLOCKGROUP_ATTRIBUTES[
+        BLOCKGROUP_ATTRIBUTES["BG_ID_10"] == row["BG_ID_10"]
+    ].iloc[0]
+    distance = human_readable_distance(blockgroup_attributes["MEDIAN_TRANSIT_METERS"])
+
+    # closest stop info
+    stop_type = row["STOP_TYPE"].lower()
+    stop_name = row["STOP_NAME"]
+    time = "%0.2f" % (row["NEAREST_TRANSIT_SECONDS"] / 60)
+
+    # neighborhood image always exists
+    neighborhood_image = "%s/%s.png" % (
+        NEIGHBORHOOD_IMAGES, neighborhood_name.lower().replace(" ", "_")
+    )
+
+    # parcel image always may not
+    parcel_image = "%s/%d.jpg" % (
+        PARCEL_IMAGES, row["Land_Parcel_ID"]
+    )
+    if (not os.path.isfile(parcel_image)):
+        parcel_image = None
+
+    return {
+        "message": (
+            f"The closest MBTA {stop_type} stop is {stop_name}."
+            f" This is a {time} minute walk, according to OpenStreetMap."
+            f" The average walking distance to a transit stop in this census block group is {distance}."
+            f" {n_transit_lines} different transit lines serve {neighborhood_name}."
+        ),
+        "neighborhood_image": neighborhood_image,
+        "parcel_image": parcel_image
+    }
+
 if (__name__ == "__main__"):
     import argparse
     import json
@@ -288,7 +355,7 @@ if (__name__ == "__main__"):
     )
     api = tweepy.API(auth)
 
-    df = pandas.read_csv(INPUT_FILE)
+    df = pandas.read_csv(INPUT_PARCELS)
     start_at = 0
 
     # Load the previous position of the bot
@@ -300,21 +367,22 @@ if (__name__ == "__main__"):
     for (index, row) in df[start_at + 2:].iterrows():
         print("Gathering information for row: %d" % index)
         message = generate_parcel_tweet(row, credentials["googlemaps"])
+        reply = generate_neighborhood_tweet(row)
+        status = None
 
         # Save position
         with open(STATUS_FILE, "w") as f:
             f.write(str(index))
 
         # Tweet with image
+        message = "%s (1/2)" % message
         if (os.path.isfile(DEFAULT_IMAGE_PATH)):
             if (args.dry_run):
                 print("Not Tweeting: %s" % message)
             else:
                 print("Tweeting: %s" % message)
                 status = api.update_with_media(DEFAULT_IMAGE_PATH, message)
-                # returns Status object
             os.remove(DEFAULT_IMAGE_PATH)
-            time.sleep(SLEEP_TIME)
 
         # Tweet without image
         else:
@@ -325,5 +393,28 @@ if (__name__ == "__main__"):
                 print("Not Tweeting: %s" % message)
                 #status = api.update_status(message)
 
+        # Reply
+        reply_message = "%s (2/2)" % reply["message"]
+        if (status):
+            media_ids = []
+
+            if (reply["parcel_image"]):
+                print("Uploading: %s" % reply["parcel_image"])
+                media_ids.append(api.media_upload(reply["parcel_image"]).media_id)
+            else:
+                print("WARNING: Could not find parcel image")
+
+            print("Uploading: %s" % reply["neighborhood_image"])
+            media_ids.append(api.media_upload(reply["neighborhood_image"]).media_id)
+
+            print("Replying with: %s" % reply_message)
+            api.update_status(
+                "@bariexplorer %s" % reply_message,
+                in_reply_to_status_id = status.id,
+                media_ids = media_ids
+            )
+        else:
+            print("Not replying with: %s" % reply["message"])
 
         print("")
+        time.sleep(SLEEP_TIME)
