@@ -12,7 +12,7 @@ Next release
   * [x] One tweet per parcel: either the zero value record or the first record observed
 
 Future releases
-* [ ] Reply tweet language: "The closest MBTA [bus/subway] stop is [stop_name]. This is a [time] minute walk, according to OpenStreetMap. The average walking distance to a transit stop in this census block group is [dist]. [Number] different transit lines serve [neighborhood_name]."
+* [x] Reply tweet language: "The closest MBTA [bus/subway] stop is [stop_name]. This is a [time] minute walk, according to OpenStreetMap. The average walking distance to a transit stop in this census block group is [dist]. [Number] different transit lines serve [neighborhood_name]."
 
 Images:
 * [x] Parcel-level, with parcel outlined, walking directions traced, and stop indicated with yellow bus or white T icon
@@ -22,6 +22,6 @@ Images:
 Variables:
 * [x] For each stop: bus or subway
 * [x] For each parcel: walking time to nearest stop
-* [ ] For block group: average distance (in miles) to nearest transit stop
-* [ ] For neighborhood: number of transit lines (bus + T) that are found in that neighborhood
+* [x] For block group: average distance (in miles) to nearest transit stop
+* [x] For neighborhood: number of transit lines (bus + T) that are found in that neighborhood
 

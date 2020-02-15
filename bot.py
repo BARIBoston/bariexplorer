@@ -11,7 +11,7 @@ IMAGES_DIR = "."
 DEFAULT_IMAGE_PATH = "%s/gsv_0.jpg" % IMAGES_DIR
 
 # The CSV file to retrieve data from
-INPUT_PARCELS = "./parcels_new.csv"
+INPUT_PARCELS = "./parcels_new_shuffled.csv"
 INPUT_NEIGHBORHOODS = "./neighborhoods.csv"
 NEIGHBORHOOD_ATTRIBUTES = pandas.read_csv(INPUT_NEIGHBORHOODS)
 INPUT_BLOCKGROUPS = "./blockgroups.csv"
@@ -138,6 +138,12 @@ NEIGHBOURHOOD_PREPEND_THE = {
     "Leather District"
 }
 
+# determine whether or not to skip a row in the data
+def skip_row(row):
+    if (pandas.isnull(row["ST_NUM"])):
+        return "no ST_NUM"
+    return False
+
 def human_readable_distance(distance_meters):
     distance_miles = distance_meters / METERS_IN_MILE
     if (distance_miles < MILES_FEET_CUTOFF):
@@ -162,9 +168,12 @@ def article_for(str_):
 
 # Returns True if a string contains digits; False otherwise
 def contains_digits(str_):
-    for digit in DIGITS:
-        if (digit in str_):
-            return True
+    if ((type(str_) is float) or (type(str_) is int)):
+        return True
+    else:
+        for digit in DIGITS:
+            if (digit in str_):
+                return True
 
 # Given an address and lon-lat pair, download the address's Google Street View
 # image, falling back to the lon-lat pair if the address has no street number
@@ -195,10 +204,10 @@ def generate_parcel_tweet(row, googlemaps_api_key):
 
     ### Address string: "This parcel on Waymount St." or "72 Day St."
 
-    if (contains_digits(row["ST_NUM"])):
-        street_num = row["ST_NUM"].replace(" ", "-")
-    else:
+    if (pandas.isnull(row["ST_NUM"])):
         street_num = "This parcel on"
+    else:
+        street_num = str(row["ST_NUM"])
 
     suffix_raw = row["ST_NAME_SUF"]
     if (suffix_raw in ST_NAME_SUF_MAPPING):
@@ -365,56 +374,61 @@ if (__name__ == "__main__"):
 
     # Loop over rows
     for (index, row) in df[start_at + 2:].iterrows():
-        print("Gathering information for row: %d" % index)
-        message = generate_parcel_tweet(row, credentials["googlemaps"])
-        reply = generate_neighborhood_tweet(row)
-        status = None
-
-        # Save position
-        with open(STATUS_FILE, "w") as f:
-            f.write(str(index))
-
-        # Tweet with image
-        message = "%s (1/2)" % message
-        if (os.path.isfile(DEFAULT_IMAGE_PATH)):
-            if (args.dry_run):
-                print("Not Tweeting: %s" % message)
-            else:
-                print("Tweeting: %s" % message)
-                status = api.update_with_media(DEFAULT_IMAGE_PATH, message)
-            os.remove(DEFAULT_IMAGE_PATH)
-
-        # Tweet without image
+        skip = skip_row(row)
+        if (skip):
+            if (type(skip) is str):
+                print("Skipping row, reason: %s" % skip)
         else:
-            message = "%s There is no image available for this parcel." % message
-            if (args.dry_run):
-                print("Not Tweeting: %s" % message)
+            print("Gathering information for row: %d" % index)
+            message = generate_parcel_tweet(row, credentials["googlemaps"])
+            reply = generate_neighborhood_tweet(row)
+            status = None
+
+            # Save position
+            with open(STATUS_FILE, "w") as f:
+                f.write(str(index))
+
+            # Tweet with image
+            message = "%s (1/2)" % message
+            if (os.path.isfile(DEFAULT_IMAGE_PATH)):
+                if (args.dry_run):
+                    print("Not Tweeting: %s" % message)
+                else:
+                    print("Tweeting: %s" % message)
+                    status = api.update_with_media(DEFAULT_IMAGE_PATH, message)
+                os.remove(DEFAULT_IMAGE_PATH)
+
+            # Tweet without image
             else:
-                print("Not Tweeting: %s" % message)
-                #status = api.update_status(message)
+                message = "%s There is no image available for this parcel." % message
+                if (args.dry_run):
+                    print("Not Tweeting: %s" % message)
+                else:
+                    print("Not Tweeting: %s" % message)
+                    #status = api.update_status(message)
 
-        # Reply
-        reply_message = "%s (2/2)" % reply["message"]
-        if (status):
-            media_ids = []
+            # Reply
+            reply_message = "%s (2/2)" % reply["message"]
+            if (status):
+                media_ids = []
 
-            if (reply["parcel_image"]):
-                print("Uploading: %s" % reply["parcel_image"])
-                media_ids.append(api.media_upload(reply["parcel_image"]).media_id)
+                if (reply["parcel_image"]):
+                    print("Uploading: %s" % reply["parcel_image"])
+                    media_ids.append(api.media_upload(reply["parcel_image"]).media_id)
+                else:
+                    print("WARNING: Could not find parcel image")
+
+                print("Uploading: %s" % reply["neighborhood_image"])
+                media_ids.append(api.media_upload(reply["neighborhood_image"]).media_id)
+
+                print("Replying with: %s" % reply_message)
+                api.update_status(
+                    "@bariexplorer %s" % reply_message,
+                    in_reply_to_status_id = status.id,
+                    media_ids = media_ids
+                )
             else:
-                print("WARNING: Could not find parcel image")
+                print("Not replying with: %s" % reply["message"])
 
-            print("Uploading: %s" % reply["neighborhood_image"])
-            media_ids.append(api.media_upload(reply["neighborhood_image"]).media_id)
-
-            print("Replying with: %s" % reply_message)
-            api.update_status(
-                "@bariexplorer %s" % reply_message,
-                in_reply_to_status_id = status.id,
-                media_ids = media_ids
-            )
-        else:
-            print("Not replying with: %s" % reply["message"])
-
-        print("")
-        time.sleep(SLEEP_TIME)
+            print("")
+            time.sleep(SLEEP_TIME)
