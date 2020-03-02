@@ -14,13 +14,17 @@ DEFAULT_IMAGE_PATH = "%s/gsv_0.jpg" % IMAGES_DIR
 # The CSV file to retrieve data from
 INPUT_PARCELS = "./parcels_shuffled_2020_03_02.csv"
 INPUT_NEIGHBORHOODS = "./neighborhoods.csv"
-NEIGHBORHOOD_ATTRIBUTES = pandas.read_csv(INPUT_NEIGHBORHOODS)
+INPUT_TRACTS = "./tracts.csv"
 INPUT_BLOCKGROUPS = "./blockgroups.csv"
+
+TRACT_ATTRIBUTES = pandas.read_csv(INPUT_TRACTS)
+NEIGHBORHOOD_ATTRIBUTES = pandas.read_csv(INPUT_NEIGHBORHOODS)
 BLOCKGROUP_ATTRIBUTES = pandas.read_csv(INPUT_BLOCKGROUPS)
 
 # Pregenerated images
 NEIGHBORHOOD_IMAGES = "./neighborhood_maps/"
 PARCEL_IMAGES = "./composite/"
+TRACT_AGE_GRAPHS = "./tract_age_graphs/"
 
 # The JSON file where credentials are stored
 CREDENTIALS_FILE = "credentials.json"
@@ -342,6 +346,76 @@ def generate_neighborhood_tweet(row):
         "images": images
     }
 
+# The density in this census tract (*123) is 13,234 people/square mile, which is less dense than 75% of Boston. 22% of people rent their home, with a median rent of $2,400 (12% higher than the citywide median).
+def generate_tract_housing_characteristics_tweet(row):
+    tract_id = int(row["CT_ID_10"])
+    tract_attributes = TRACT_ATTRIBUTES[
+        TRACT_ATTRIBUTES["CT_ID_10"] == row["CT_ID_10"]
+    ].iloc[0]
+
+    population_density = int(tract_attributes["PopDen"])
+    population_density_pctile = int(tract_attributes["PopDenPctile"] * 100)
+
+    percent_renters = int(tract_attributes["RentersPer"] * 100)
+
+    median_rent = int(tract_attributes["MedGrossRent"])
+    median_rent_pctile = int(tract_attributes["MedGrossRentPctile"] * 100)
+
+    return {
+        "message": (
+            f"The density in this census tract ({tract_id}) is {population_density} per square mile, which is less than {population_density_pctile}% of Boston."
+            f" {percent_renters}% of people rent their home, with a median rent of ${median_rent} ({median_rent_pctile}% higher than the neighborhood-level median rent)."
+        ),
+        "images": []
+    }
+
+# This census tract (*123) is 19% more racially/ethnically diverse than the city average.
+def generate_tract_ethnic_heterogeneity_tweet(row):
+    tract_id = int(row["CT_ID_10"])
+    tract_attributes = TRACT_ATTRIBUTES[
+        TRACT_ATTRIBUTES["CT_ID_10"] == row["CT_ID_10"]
+    ].iloc[0]
+
+    eth_het_pctile = tract_attributes["EthHetPctile"]
+
+    if (eth_het_pctile > 0.5):
+        more_less = "more"
+        eth_het_ratio = eth_het_pctile - 0.5
+    else:
+        more_less = "less"
+        eth_het_ratio = 0.5 - eth_het_pctile
+    eth_het_ratio = int(eth_het_ratio * 100)
+
+    return {
+        "message": (
+            f"This census tract ({tract_id}) is {eth_het_ratio}% {more_less} racially/ethnically diverse than the city average."
+        ),
+        "images": []
+    }
+
+# In this census tract ($123), 20% of residents have a high school degree or less, 20% have completed some college or a bachelor’s degree, and 20% have a graduate degree.
+def generate_tract_education_age_tweet(row):
+    tract_id = int(row["CT_ID_10"])
+    tract_attributes = TRACT_ATTRIBUTES[
+        TRACT_ATTRIBUTES["CT_ID_10"] == row["CT_ID_10"]
+    ].iloc[0]
+
+    percent_hs = int(tract_attributes["highSchoolDegreeOrless"])
+    percent_coll = int(tract_attributes["completedCollegeOrBachelorDegree"])
+    percent_grad = int(tract_attributes["graduateDegree"])
+
+    tract_age_graph = "%s/%d.jpg" % (TRACT_AGE_GRAPHS, tract_id)
+
+    return {
+        "message": (
+            f"In this census tract ({tract_id}),"
+            f" {percent_hs}% of residents have a high school degree or less,"
+            f" {percent_coll}% have completed some college or a bachelor's degree,"
+            f" and {percent_grad}% have a graduate degree."
+        ),
+        "images": [tract_age_graph]
+    }
+
 if (__name__ == "__main__"):
     import argparse
     import json
@@ -439,7 +513,22 @@ if (__name__ == "__main__"):
 
             ####################################################################
             # Reply tweet option #1: parcel information ########################
-            reply = generate_neighborhood_tweet(row)
+
+            # each item in this list is a function that takes a row of input
+            # and returns a dict with the keys "message" and "images",
+            # containing the tweet text and the paths to images to use,
+            # respectively.
+            tweet_generators = [
+                generate_neighborhood_tweet,
+                generate_tract_housing_characteristics_tweet,
+                generate_tract_ethnic_heterogeneity_tweet,
+                generate_tract_education_age_tweet,
+            ]
+
+            tweet_generator = random.choice(tweet_generators)
+            print("\nCreating reply tweet using tweet generator:")
+            print(tweet_generator)
+            reply = tweet_generator(row)
 
             tweet(
                 message = "%s (2/2)" % reply["message"],
