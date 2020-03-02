@@ -3,6 +3,7 @@
 import collections
 import google_streetview.api
 import os
+import random
 import pandas
 import time
 
@@ -326,8 +327,10 @@ def generate_neighborhood_tweet(row):
     parcel_image = "%s/%d.jpg" % (
         PARCEL_IMAGES, row["Land_Parcel_ID"]
     )
-    if (not os.path.isfile(parcel_image)):
-        parcel_image = None
+    if (os.path.isfile(parcel_image)):
+        images = [neighborhood_image, parcel_image]
+    else:
+        images = [neighborhood_image, parcel_image]
 
     return {
         "message": (
@@ -336,8 +339,7 @@ def generate_neighborhood_tweet(row):
             f" The average walking distance to a transit stop in this census block group is {distance}."
             f" {n_transit_lines} different transit lines serve {neighborhood_name}."
         ),
-        "neighborhood_image": neighborhood_image,
-        "parcel_image": parcel_image
+        "images": images
     }
 
 if (__name__ == "__main__"):
@@ -439,16 +441,9 @@ if (__name__ == "__main__"):
             # Reply tweet option #1: parcel information ########################
             reply = generate_neighborhood_tweet(row)
 
-            if (reply["parcel_image"]):
-                reply_images = [reply["parcel_image"]]
-            else:
-                print("WARNING: Could not find parcel image")
-                reply_images = []
-            reply_images.append(reply["neighborhood_image"])
-
             tweet(
                 message = "%s (2/2)" % reply["message"],
-                image_paths = reply_images,
+                image_paths = reply["images"],
                 reply_to_status = main_status
             )
 
