@@ -11,7 +11,7 @@ IMAGES_DIR = "."
 DEFAULT_IMAGE_PATH = "%s/gsv_0.jpg" % IMAGES_DIR
 
 # The CSV file to retrieve data from
-INPUT_PARCELS = "./parcels_new_shuffled.csv"
+INPUT_PARCELS = "./parcels_shuffled_2020_03_02.csv"
 INPUT_NEIGHBORHOODS = "./neighborhoods.csv"
 NEIGHBORHOOD_ATTRIBUTES = pandas.read_csv(INPUT_NEIGHBORHOODS)
 INPUT_BLOCKGROUPS = "./blockgroups.csv"
