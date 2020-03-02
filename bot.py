@@ -493,6 +493,7 @@ if (__name__ == "__main__"):
 
             ####################################################################
             # Main tweet #######################################################
+
             main_message = generate_parcel_tweet(row, credentials["googlemaps"])
 
             if (os.path.isfile(DEFAULT_IMAGE_PATH)):
@@ -512,7 +513,7 @@ if (__name__ == "__main__"):
                 pass
 
             ####################################################################
-            # Reply tweet option #1: parcel information ########################
+            # Reply tweet (randomly chosen) ####################################
 
             # each item in this list is a function that takes a row of input
             # and returns a dict with the keys "message" and "images",
