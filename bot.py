@@ -368,6 +368,8 @@ if (__name__ == "__main__"):
     def tweet(message, image_paths = [], reply_to_status = None):
         tweet_kwargs = {}
 
+        print("")
+
         # upload images
         if (len(image_paths) > 0):
             media_ids = []
@@ -407,54 +409,47 @@ if (__name__ == "__main__"):
                 print("Skipping row, reason: %s" % skip)
         else:
             print("Gathering information for row: %d" % index)
-            message = generate_parcel_tweet(row, credentials["googlemaps"])
-            reply = generate_neighborhood_tweet(row)
-            status = None
+            main_status = None
 
             # Save position
             with open(STATUS_FILE, "w") as f:
                 f.write(str(index))
 
-            # Main tweet
-            main_tweet = generate_parcel_tweet(row, credentials["googlemaps"])
+            ####################################################################
+            # Main tweet #######################################################
+            main_message = generate_parcel_tweet(row, credentials["googlemaps"])
+
             if (os.path.isfile(DEFAULT_IMAGE_PATH)):
                 main_tweet_images = [DEFAULT_IMAGE_PATH]
             else:
                 main_tweet_images = None
-                main_tweet = "%s There is no image available for this parcel." % main_tweet
-            tweet(
-                message = "%s (1/2)" % main_tweet,
+                main_message = "%s There is no image available for this parcel." % main_message
+
+            main_status = tweet(
+                message = "%s (1/2)" % main_message,
                 image_paths = main_tweet_images
             )
+
             try:
                 os.remove(DEFAULT_IMAGE_PATH)
             except:
                 pass
 
-            """
-            # Reply
-            reply_message = "%s (2/2)" % reply["message"]
-            if (status):
-                media_ids = []
+            ####################################################################
+            # Reply tweet option #1: parcel information ########################
+            reply = generate_neighborhood_tweet(row)
 
-                if (reply["parcel_image"]):
-                    print("Uploading: %s" % reply["parcel_image"])
-                    media_ids.append(api.media_upload(reply["parcel_image"]).media_id)
-                else:
-                    print("WARNING: Could not find parcel image")
-
-                print("Uploading: %s" % reply["neighborhood_image"])
-                media_ids.append(api.media_upload(reply["neighborhood_image"]).media_id)
-
-                print("Replying with: %s" % reply_message)
-                api.update_status(
-                    "@bariexplorer %s" % reply_message,
-                    in_reply_to_status_id = status.id,
-                    media_ids = media_ids
-                )
+            if (reply["parcel_image"]):
+                reply_images = [reply["parcel_image"]]
             else:
-                print("Not replying with: %s" % reply["message"])
-            """
+                print("WARNING: Could not find parcel image")
+                reply_images = []
+            reply_images.append(reply["neighborhood_image"])
 
-            print("")
+            tweet(
+                message = "%s (2/2)" % reply["message"],
+                image_paths = reply_images,
+                reply_to_status = main_status
+            )
+
             time.sleep(SLEEP_TIME)
