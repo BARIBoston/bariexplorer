@@ -364,6 +364,33 @@ if (__name__ == "__main__"):
     )
     api = tweepy.API(auth)
 
+    # wrapper around tweet functionality
+    def tweet(message, image_paths = [], reply_to_status = None):
+        tweet_kwargs = {}
+
+        # upload images
+        if (len(image_paths) > 0):
+            media_ids = []
+            for image_path in image_paths:
+                if (args.dry_run):
+                    print("Not uploading: %s" % image_path)
+                else:
+                    print("Uploading: %s" % image_path)
+                    media_ids.append(api.media_upload(image_path).media_id)
+            tweet_kwargs["media_ids"] = media_ids
+
+        # reply
+        if (reply_to_status):
+            tweet_kwargs["in_reply_to_status_id"] = reply_to_status.id
+            message = "@bariexplorer %s" % message
+            print("Set in_reply_to_status_id to %d" % reply_to_status.id)
+
+        if (args.dry_run):
+            print("Not tweeting: %s" % message)
+        else:
+            print("Tweeting: %s" % message)
+            return api.update_status(message, **tweet_kwargs)
+
     df = pandas.read_csv(INPUT_PARCELS)
     start_at = 0
 
@@ -388,7 +415,7 @@ if (__name__ == "__main__"):
             with open(STATUS_FILE, "w") as f:
                 f.write(str(index))
 
-            # Tweet with image
+            # Main tweet
             message = "%s (1/2)" % message
             if (os.path.isfile(DEFAULT_IMAGE_PATH)):
                 if (args.dry_run):
