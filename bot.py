@@ -416,24 +416,22 @@ if (__name__ == "__main__"):
                 f.write(str(index))
 
             # Main tweet
-            message = "%s (1/2)" % message
+            main_tweet = generate_parcel_tweet(row, credentials["googlemaps"])
             if (os.path.isfile(DEFAULT_IMAGE_PATH)):
-                if (args.dry_run):
-                    print("Not Tweeting: %s" % message)
-                else:
-                    print("Tweeting: %s" % message)
-                    status = api.update_with_media(DEFAULT_IMAGE_PATH, message)
-                os.remove(DEFAULT_IMAGE_PATH)
-
-            # Tweet without image
+                main_tweet_images = [DEFAULT_IMAGE_PATH]
             else:
-                message = "%s There is no image available for this parcel." % message
-                if (args.dry_run):
-                    print("Not Tweeting: %s" % message)
-                else:
-                    print("Not Tweeting: %s" % message)
-                    #status = api.update_status(message)
+                main_tweet_images = None
+                main_tweet = "%s There is no image available for this parcel." % main_tweet
+            tweet(
+                message = "%s (1/2)" % main_tweet,
+                image_paths = main_tweet_images
+            )
+            try:
+                os.remove(DEFAULT_IMAGE_PATH)
+            except:
+                pass
 
+            """
             # Reply
             reply_message = "%s (2/2)" % reply["message"]
             if (status):
@@ -456,6 +454,7 @@ if (__name__ == "__main__"):
                 )
             else:
                 print("Not replying with: %s" % reply["message"])
+            """
 
             print("")
             time.sleep(SLEEP_TIME)
