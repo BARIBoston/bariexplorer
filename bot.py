@@ -547,6 +547,6 @@ if (__name__ == "__main__"):
             traceback.print_exc()
             client.files_upload(
                 channels = credentials["slack"]["channel"],
-                initial_comment = "<!channel> bariexplorer crashed! Stack trace attached.",
+                initial_comment = "<!channel> bariexplorer crashed! Stack trace attached. I have restarted the bot automatically 👍",
                 content = traceback.format_exc()
             )
