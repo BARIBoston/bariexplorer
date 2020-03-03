@@ -419,6 +419,8 @@ def generate_tract_education_age_tweet(row):
 if (__name__ == "__main__"):
     import argparse
     import json
+    import slack
+    import traceback
     import tweepy
 
     parser = argparse.ArgumentParser()
@@ -439,6 +441,8 @@ if (__name__ == "__main__"):
         credentials["twitter"]["access_token_secret"]
     )
     api = tweepy.API(auth)
+
+    slack_client = slack.WebClient(token = credentials["slack"]["token"])
 
     # wrapper around tweet functionality
     def tweet(message, image_paths = [], reply_to_status = None):
@@ -479,62 +483,70 @@ if (__name__ == "__main__"):
 
     # Loop over rows
     for (index, row) in df[start_at + 2:].iterrows():
-        skip = skip_row(row)
-        if (skip):
-            if (type(skip) is str):
-                print("Skipping row, reason: %s" % skip)
-        else:
-            print("Gathering information for row: %d" % index)
-            main_status = None
-
-            # Save position
-            with open(STATUS_FILE, "w") as f:
-                f.write(str(index))
-
-            ####################################################################
-            # Main tweet #######################################################
-
-            main_message = generate_parcel_tweet(row, credentials["googlemaps"])
-
-            if (os.path.isfile(DEFAULT_IMAGE_PATH)):
-                main_tweet_images = [DEFAULT_IMAGE_PATH]
+        try:
+            skip = skip_row(row)
+            if (skip):
+                if (type(skip) is str):
+                    print("Skipping row, reason: %s" % skip)
             else:
-                main_tweet_images = None
-                main_message = "%s There is no image available for this parcel." % main_message
+                print("Gathering information for row: %d" % index)
+                main_status = None
 
-            main_status = tweet(
-                message = "%s (1/2)" % main_message,
-                image_paths = main_tweet_images
+                # Save position
+                with open(STATUS_FILE, "w") as f:
+                    f.write(str(index))
+
+                ################################################################
+                # Main tweet ###################################################
+
+                main_message = generate_parcel_tweet(row, credentials["googlemaps"])
+
+                if (os.path.isfile(DEFAULT_IMAGE_PATH)):
+                    main_tweet_images = [DEFAULT_IMAGE_PATH]
+                else:
+                    main_tweet_images = None
+                    main_message = "%s There is no image available for this parcel." % main_message
+
+                main_status = tweet(
+                    message = "%s (1/2)" % main_message,
+                    image_paths = main_tweet_images
+                )
+
+                try:
+                    os.remove(DEFAULT_IMAGE_PATH)
+                except:
+                    pass
+
+                ################################################################
+                # Reply tweet (randomly chosen) ################################
+
+                # each item in this list is a function that takes a row of input
+                # and returns a dict with the keys "message" and "images",
+                # containing the tweet text and the paths to images to use,
+                # respectively.
+                tweet_generators = [
+                    generate_neighborhood_tweet,
+                    generate_tract_housing_characteristics_tweet,
+                    generate_tract_ethnic_heterogeneity_tweet,
+                    generate_tract_education_age_tweet,
+                ]
+
+                tweet_generator = random.choice(tweet_generators)
+                print("\nCreating reply tweet using tweet generator:")
+                print(tweet_generator)
+                reply = tweet_generator(row)
+
+                tweet(
+                    message = "%s (2/2)" % reply["message"],
+                    image_paths = reply["images"],
+                    reply_to_status = main_status
+                )
+
+                time.sleep(SLEEP_TIME)
+        except Exception as error:
+            traceback.print_exc()
+            client.files_upload(
+                channels = credentials["slack"]["channel"],
+                initial_comment = "<!channel> bariexplorer crashed! Stack trace attached.",
+                content = traceback.format_exc()
             )
-
-            try:
-                os.remove(DEFAULT_IMAGE_PATH)
-            except:
-                pass
-
-            ####################################################################
-            # Reply tweet (randomly chosen) ####################################
-
-            # each item in this list is a function that takes a row of input
-            # and returns a dict with the keys "message" and "images",
-            # containing the tweet text and the paths to images to use,
-            # respectively.
-            tweet_generators = [
-                generate_neighborhood_tweet,
-                generate_tract_housing_characteristics_tweet,
-                generate_tract_ethnic_heterogeneity_tweet,
-                generate_tract_education_age_tweet,
-            ]
-
-            tweet_generator = random.choice(tweet_generators)
-            print("\nCreating reply tweet using tweet generator:")
-            print(tweet_generator)
-            reply = tweet_generator(row)
-
-            tweet(
-                message = "%s (2/2)" % reply["message"],
-                image_paths = reply["images"],
-                reply_to_status = main_status
-            )
-
-            time.sleep(SLEEP_TIME)
