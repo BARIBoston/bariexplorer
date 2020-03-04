@@ -2,10 +2,24 @@
 
 import collections
 import google_streetview.api
+import locale
 import os
 import random
 import pandas
 import time
+locale.setlocale(locale.LC_ALL, "en_US")
+
+# Time to wait between crash and reboot of the bot
+REBOOT_TIME = 60
+
+# Tweepy API config
+TWEEPY_RETRY_CONFIG = {
+    "retry_count": 5,
+    "retry_delay": 5,
+    "retry_errors": set([
+        503, # over capacity
+    ])
+}
 
 # Directory to save Google Street View images and metadata files to
 IMAGES_DIR = "."
@@ -25,6 +39,8 @@ BLOCKGROUP_ATTRIBUTES = pandas.read_csv(INPUT_BLOCKGROUPS)
 NEIGHBORHOOD_IMAGES = "./neighborhood_maps/"
 PARCEL_IMAGES = "./composite/"
 TRACT_AGE_GRAPHS = "./tract_age_graphs/"
+TRACT_ETH_HET_MAPS = "./tract_eth_het_maps/"
+TRACT_RENT_MAPS = "./tract_rent_maps/"
 
 # The JSON file where credentials are stored
 CREDENTIALS_FILE = "credentials.json"
@@ -347,29 +363,33 @@ def generate_neighborhood_tweet(row):
     }
 
 # The density in this census tract (*123) is 13,234 people/square mile, which is less dense than 75% of Boston. 22% of people rent their home, with a median rent of $2,400 (12% higher than the citywide median).
+# Chloropleth ofmedian rent, red outline of the tract in question, white to green colormap
 def generate_tract_housing_characteristics_tweet(row):
     tract_id = int(row["CT_ID_10"])
     tract_attributes = TRACT_ATTRIBUTES[
         TRACT_ATTRIBUTES["CT_ID_10"] == row["CT_ID_10"]
     ].iloc[0]
 
-    population_density = int(tract_attributes["PopDen"])
+    population_density = locale.format("%d", int(tract_attributes["PopDen"]), grouping = True)
     population_density_pctile = int(tract_attributes["PopDenPctile"] * 100)
 
     percent_renters = int(tract_attributes["RentersPer"] * 100)
 
-    median_rent = int(tract_attributes["MedGrossRent"])
+    median_rent = locale.format("%d", int(tract_attributes["MedGrossRent"]), grouping = True)
     median_rent_pctile = int(tract_attributes["MedGrossRentPctile"] * 100)
+
+    tract_rent_map = "%s/%d.png" % (TRACT_RENT_MAPS, tract_id)
 
     return {
         "message": (
             f"The density in this census tract ({tract_id}) is {population_density} per square mile, which is less than {population_density_pctile}% of Boston."
             f" {percent_renters}% of people rent their home, with a median rent of ${median_rent} ({median_rent_pctile}% higher than the neighborhood-level median rent)."
         ),
-        "images": []
+        "images": [tract_rent_map]
     }
 
 # This census tract (*123) is 19% more racially/ethnically diverse than the city average.
+# Chloropleth of ethnic heterogeneity, red outline of the tract in question, viridis colormap
 def generate_tract_ethnic_heterogeneity_tweet(row):
     tract_id = int(row["CT_ID_10"])
     tract_attributes = TRACT_ATTRIBUTES[
@@ -386,14 +406,17 @@ def generate_tract_ethnic_heterogeneity_tweet(row):
         eth_het_ratio = 0.5 - eth_het_pctile
     eth_het_ratio = int(eth_het_ratio * 100)
 
+    tract_eth_het_map = "%s/%d.png" % (TRACT_ETH_HET_MAPS, tract_id)
+
     return {
         "message": (
             f"This census tract ({tract_id}) is {eth_het_ratio}% {more_less} racially/ethnically diverse than the city average."
         ),
-        "images": []
+        "images": [tract_eth_het_map]
     }
 
 # In this census tract ($123), 20% of residents have a high school degree or less, 20% have completed some college or a bachelor’s degree, and 20% have a graduate degree.
+# Image: bar graph of ages
 def generate_tract_education_age_tweet(row):
     tract_id = int(row["CT_ID_10"])
     tract_attributes = TRACT_ATTRIBUTES[
@@ -404,7 +427,7 @@ def generate_tract_education_age_tweet(row):
     percent_coll = int(tract_attributes["completedCollegeOrBachelorDegree"])
     percent_grad = int(tract_attributes["graduateDegree"])
 
-    tract_age_graph = "%s/%d.jpg" % (TRACT_AGE_GRAPHS, tract_id)
+    tract_age_graph = "%s/%d.png" % (TRACT_AGE_GRAPHS, tract_id)
 
     return {
         "message": (
@@ -525,10 +548,10 @@ if (__name__ == "__main__"):
                 # containing the tweet text and the paths to images to use,
                 # respectively.
                 tweet_generators = [
-                    generate_neighborhood_tweet,
+                    #generate_neighborhood_tweet,
                     generate_tract_housing_characteristics_tweet,
-                    generate_tract_ethnic_heterogeneity_tweet,
-                    generate_tract_education_age_tweet,
+                    #generate_tract_ethnic_heterogeneity_tweet,
+                    #generate_tract_education_age_tweet,
                 ]
 
                 tweet_generator = random.choice(tweet_generators)
@@ -543,10 +566,13 @@ if (__name__ == "__main__"):
                 )
 
                 time.sleep(SLEEP_TIME)
+        except KeyboardInterrupt:
+            raise
         except Exception as error:
             traceback.print_exc()
-            client.files_upload(
+            slack_client.files_upload(
                 channels = credentials["slack"]["channel"],
-                initial_comment = "<!channel> bariexplorer crashed! Stack trace attached. I have restarted the bot automatically 👍",
+                initial_comment = "bariexplorer crashed! Stack trace attached. I will be restarting the bot in %d seconds 👍" % REBOOT_TIME,
                 content = traceback.format_exc()
             )
+            time.sleep(REBOOT_TIME)
