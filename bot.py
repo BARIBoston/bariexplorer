@@ -380,14 +380,23 @@ def generate_tract_housing_characteristics_tweet(row):
     percent_renters = int(tract_attributes["RentersPer"] * 100)
 
     median_rent = locale.format("%d", int(tract_attributes["MedGrossRent"]), grouping = True)
-    median_rent_pctile = int(tract_attributes["MedGrossRentPctile"] * 100)
+    median_rent_pctile = tract_attributes["MedGrossRentPctile"]
+
+    print(median_rent_pctile)
+    if (median_rent_pctile > 0.5):
+        more_less = "more"
+        median_rent_ratio = median_rent_pctile - 0.5
+    else:
+        more_less = "less"
+        median_rent_ratio = 0.5 - median_rent_pctile
+    median_rent_ratio = int(median_rent_ratio * 100)
 
     tract_rent_map = "%s/%d.png" % (TRACT_RENT_MAPS, tract_id)
 
     return {
         "message": (
             f"The density in this census tract ({tract_id}) is {population_density} per square mile, which is less than {population_density_pctile}% of Boston."
-            f" {percent_renters}% of people rent their home, with a median rent of ${median_rent} ({median_rent_pctile}% higher than the neighborhood-level median rent)."
+            f" {percent_renters}% of people rent their home, with a median rent of ${median_rent} ({median_rent_ratio}% higher than the median neighborhood-level median rent)."
         ),
         "images": [tract_rent_map]
     }
