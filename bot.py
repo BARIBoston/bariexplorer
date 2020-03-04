@@ -561,10 +561,10 @@ if (__name__ == "__main__"):
                 # containing the tweet text and the paths to images to use,
                 # respectively.
                 tweet_generators = [
-                    #generate_neighborhood_tweet,
+                    generate_neighborhood_tweet,
                     generate_tract_housing_characteristics_tweet,
-                    #generate_tract_ethnic_heterogeneity_tweet,
-                    #generate_tract_education_age_tweet,
+                    generate_tract_ethnic_heterogeneity_tweet,
+                    generate_tract_education_age_tweet,
                 ]
 
                 tweet_generator = random.choice(tweet_generators)
