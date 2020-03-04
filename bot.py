@@ -7,7 +7,11 @@ import os
 import random
 import pandas
 import time
-locale.setlocale(locale.LC_ALL, "en_US")
+
+try:
+    locale.setlocale(locale.LC_ALL, "en_US")
+except:
+    locale.setlocale(locale.LC_ALL, "en_US.utf8")
 
 # Time to wait between crash and reboot of the bot
 REBOOT_TIME = 60
